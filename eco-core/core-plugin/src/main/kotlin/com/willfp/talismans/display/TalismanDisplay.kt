@@ -1,5 +1,6 @@
 package com.willfp.talismans.display
 
+import com.rexcantor64.triton.api.TritonAPI
 import com.willfp.eco.core.EcoPlugin
 import com.willfp.eco.core.display.Display
 import com.willfp.eco.core.display.DisplayModule
@@ -33,7 +34,9 @@ class TalismanDisplay(plugin: EcoPlugin) : DisplayModule(plugin, DisplayPriority
             item = itemStack
         )
 
-        meta.setDisplayName(talisman.name.formatEco(placeholderContext))
+        if (player != null && talisman.name.isNotEmpty()) {
+            meta.setDisplayName(TritonAPI.getInstance().languageParser.parseString(TritonAPI.getInstance().playerManager.get(player.uniqueId).getLang().getName(), TritonAPI.getInstance().config.itemsSyntax, talisman.name.formatEco(placeholderContext)))
+        }
 
         if (talisman.itemStack.itemMeta?.hasCustomModelData() == true) {
             meta.setCustomModelData(talisman.itemStack.itemMeta?.customModelData)
@@ -57,8 +60,23 @@ class TalismanDisplay(plugin: EcoPlugin) : DisplayModule(plugin, DisplayPriority
                 lore.addAll(lines)
             }
         }
-
-        meta.lore = lore
+        val parsed = arrayListOf<String>()
+        lore.forEach {
+            if (player != null && it.isNotEmpty()) {
+                // Triton v3
+                parsed.add(TritonAPI.getInstance().languageParser.parseString(TritonAPI.getInstance().playerManager.get(player.uniqueId).getLang().getName(), TritonAPI.getInstance().config.itemsSyntax, it))
+                // Triton v4
+                //val result = TritonAPI.getInstance().messageParser.translateString(it, TritonAPI.getInstance().playerManager.get(player.uniqueId).language, TritonAPI.getInstance().config.itemsSyntax).result
+                //if (result.isPresent) {
+                //    parsed.add(result.get())
+                //} else {
+                //    parsed.add(it)
+                //}
+            } else {
+                parsed.add(it)
+            }
+        }
+        meta.lore = parsed
         itemStack.itemMeta = meta
     }
 }
